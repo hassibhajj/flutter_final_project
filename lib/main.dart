@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_theme.dart';
-import 'product.dart';
-import 'cart_item.dart';
+import 'models/product.dart';
+import 'models/cart_item.dart';
 
-import 'product_list_screen.dart';
+import 'pages/product_list_screen.dart';
 
 void main() {
   runApp(const SimpleEcommerceApp());

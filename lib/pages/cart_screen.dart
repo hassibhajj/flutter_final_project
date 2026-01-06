@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'main.dart';
+import '../main.dart';
 import 'address_screen.dart';
 import 'login_screen.dart';
 
@@ -66,7 +66,6 @@ class CartScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     if (!user.isLoggedIn) {
-                      // Redirect to login if not logged in
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -74,7 +73,6 @@ class CartScreen extends StatelessWidget {
                         ),
                       );
                     } else {
-                      // Proceed to checkout if logged in
                       Navigator.push(
                         context,
                         MaterialPageRoute(

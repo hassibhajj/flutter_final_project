@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'product.dart';
-import 'mock_service.dart';
-import 'product_card.dart';
-import 'main.dart';
+import '../models/product.dart';
+import '../services/api_service.dart';
+import '../widgets/product_card.dart';
+import '../main.dart';
 import 'cart_screen.dart';
 import 'login_screen.dart';
 
@@ -20,7 +20,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    _future = MockService.fetchProducts();
+    _loadProducts();
+  }
+
+  void _loadProducts() {
+    setState(() {
+      _future = ApiService.fetchProducts();
+    });
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final products = await ApiService.fetchProducts();
+      if (!mounted) return;
+      setState(() {
+        _future = Future.value(products);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Refresh failed: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -28,7 +49,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final cart = context.watch<CartModel>();
     final user = context.watch<UserModel>();
 
-    //  total items in cart
     final totalItems =
     cart.items.fold<int>(0, (sum, item) => sum + item.quantity);
 
@@ -79,7 +99,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     const BoxConstraints(minWidth: 16, minHeight: 16),
                     child: Text(
                       totalItems.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -94,22 +115,60 @@ class _ProductListScreenState extends State<ProductListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48.0),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text('Error: ${snapshot.error}'),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _loadProducts,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
+
           final products = snapshot.data ?? [];
+
           if (products.isEmpty) {
-            return const Center(child: Text('No products found'));
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 80),
+                  Center(child: Text('No products found')),
+                ],
+              ),
+            );
           }
-          return ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (_, i) {
-              final p = products[i];
-              return ProductCard(
-                product: p,
-                onAdd: () => cart.add(p),
-              );
-            },
+
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView.builder(
+              itemCount: products.length,
+              itemBuilder: (_, i) {
+                final p = products[i];
+                return ProductCard(
+                  product: p,
+                  onAdd: () => cart.add(p),
+                );
+              },
+            ),
           );
         },
       ),

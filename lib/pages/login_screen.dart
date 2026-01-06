@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'main.dart';
-import 'mock_service.dart';
+import '../main.dart';
+import '../services/api_service.dart';
 import 'product_list_screen.dart';
 import 'signup_screen.dart';
 
@@ -26,29 +26,42 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-
       _performLogin(email, password);
     }
   }
 
   Future<void> _performLogin(String email, String password) async {
-    final success = await MockService.login(email, password);
+    try {
+      final success = await ApiService.login(email, password);
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
 
-    if (success) {
-
-      context.read<UserModel>().login(email);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProductListScreen()),
-      );
-    } else {
+      if (success) {
+        context.read<UserModel>().login(email);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProductListScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid email or password")),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid email or password")),
+        SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -61,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _formKey,
           child: Column(
             children: [
-              //  Email field
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -82,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              //  Password field
               TextFormField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
@@ -99,14 +110,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
 
-              //  Login button
               _loading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                 onPressed: _submit,
                 child: const Text("Login"),
               ),
-
 
               const SizedBox(height: 12),
               TextButton(

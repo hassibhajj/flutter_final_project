@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'main.dart';
+import '../main.dart';
 import 'order_confirmation_screen.dart';
 
 class AddressScreen extends StatefulWidget {
@@ -43,7 +43,7 @@ class _AddressScreenState extends State<AddressScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
 
-            // summary box
+
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
